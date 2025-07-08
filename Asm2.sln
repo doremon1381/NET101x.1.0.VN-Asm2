@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35931.197 d17.13
+VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Asm2", "Asm2\Asm2.csproj", "{C5D71DD7-F0B8-4AD9-8FE1-4C6551216A56}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityService", "IdentityService\IdentityService.csproj", "{2550A8D3-8046-4CD7-AD5F-285782BBE2AE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityModel", "IdentityModel\IdentityModel.csproj", "{26A6E95F-EBCA-CF36-C8D5-0F3ADEF9C406}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{C5D71DD7-F0B8-4AD9-8FE1-4C6551216A56}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C5D71DD7-F0B8-4AD9-8FE1-4C6551216A56}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C5D71DD7-F0B8-4AD9-8FE1-4C6551216A56}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2550A8D3-8046-4CD7-AD5F-285782BBE2AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2550A8D3-8046-4CD7-AD5F-285782BBE2AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2550A8D3-8046-4CD7-AD5F-285782BBE2AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2550A8D3-8046-4CD7-AD5F-285782BBE2AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26A6E95F-EBCA-CF36-C8D5-0F3ADEF9C406}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26A6E95F-EBCA-CF36-C8D5-0F3ADEF9C406}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26A6E95F-EBCA-CF36-C8D5-0F3ADEF9C406}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26A6E95F-EBCA-CF36-C8D5-0F3ADEF9C406}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
