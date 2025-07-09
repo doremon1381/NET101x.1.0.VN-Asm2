@@ -133,9 +133,11 @@ namespace Asm2.Controllers
                 var jti = tokenValidation.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
                 if (dbRefreshToken.JwtId != jti)
                     throw new Exception("Bearer token is not matched!");
+
                 // check if the refresh token is expiried
                 if (dbRefreshToken.DateExpires < DateTime.Now)
                     throw new Exception("Refresh token has expired! Please re-authenticate!");
+
                 // check if the refresh token is used
                 if (dbRefreshToken.IsRevoked)
                     throw new Exception("Refresh token is used! Please re-authenticate!");
@@ -192,8 +194,6 @@ namespace Asm2.Controllers
         {
             var authClaims = new List<Claim>()
             {
-                //new Claim(ClaimTypes.NameIdentifier, user.Id),
-                //new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Name, user.UserName),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
