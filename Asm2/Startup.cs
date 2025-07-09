@@ -16,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+//using static Asm2.IdentityDbInitialize;
 
 namespace Asm2
 {
@@ -92,11 +93,10 @@ namespace Asm2
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Asm2 v1"));
             }
 
-            using (var scope = app.ApplicationServices.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
-                db.Database.EnsureCreated();
-            }
+            app.EnsureDbCreated();
+
+            app.SeedRolesAsync().GetAwaiter().GetResult();
+            app.SeedUsers();
 
             app.UseHttpsRedirection();
 

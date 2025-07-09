@@ -75,6 +75,9 @@ namespace Asm2.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
         {
+            if (!ModelState.IsValid)
+                throw new Exception("Invalid request's data!");
+
             var existingUser = await _userManager.FindByEmailAsync(registerRequest.Email);
 
             if (existingUser != null)
@@ -101,7 +104,7 @@ namespace Asm2.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest($"{ex.Message}, please re-authenticate!");
             }
         }
 
@@ -110,22 +113,12 @@ namespace Asm2.Controllers
             var jwtTokenHandler = new JwtSecurityTokenHandler();
 
             // check jwt format
-            var tokenValidation = jwtTokenHandler.ValidateToken(requestForToken.AccessToken
-                , _tokenValidationParameters, out var validToken);
-
-            // check encryption algorithm
-            if (validToken is JwtSecurityToken jwtSecurityToken)
-            {
-                var result = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256
-                    , StringComparison.InvariantCultureIgnoreCase);
-
-                if (!result) return null;
-            }
+            var tokenValidation = jwtTokenHandler.ReadJwtToken(requestForToken.AccessToken);
 
             // check validate expiry date
-            var utcExpiryDate = long.Parse(tokenValidation.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Exp).Value);
-            var expiryDate = UnixTimeStampToDateTimeUtc(utcExpiryDate);
-            if (expiryDate > DateTime.UtcNow)
+            var expiryDateFromRequestToken = long.Parse(tokenValidation.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Exp).Value);
+            var expiryDate = UnixTimeStampToDateTimeUtc(expiryDateFromRequestToken);
+            if (expiryDate > DateTime.Now)
             {
                 throw new Exception("Token has not expired yet!");
             }
@@ -141,8 +134,11 @@ namespace Asm2.Controllers
                 if (dbRefreshToken.JwtId != jti)
                     throw new Exception("Bearer token is not matched!");
                 // check if the refresh token is expiried
-                if (dbRefreshToken.DateExpires < DateTime.UtcNow)
+                if (dbRefreshToken.DateExpires < DateTime.Now)
                     throw new Exception("Refresh token has expired! Please re-authenticate!");
+                // check if the refresh token is used
+                if (dbRefreshToken.IsRevoked)
+                    throw new Exception("Refresh token is used! Please re-authenticate!");
 
                 // update refresh token for one time only
                 dbRefreshToken.IsRevoked = true;
@@ -162,14 +158,11 @@ namespace Asm2.Controllers
         {
             // Convert Unix timestamp to DateTime in UTC
             var dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(unixTimeStamp);
-            return dateTimeOffset.UtcDateTime;
+            return dateTimeOffset.DateTime.ToLocalTime();
         }
 
         private async Task CreateNewUser(RegisterRequest registerRequest)
         {
-            // Ensure the User role exists before creating a new user
-            InitiateUserRole();
-
             ApplicationUser newUser = new ApplicationUser
             {
                 UserName = registerRequest.Username,
@@ -181,17 +174,17 @@ namespace Asm2.Controllers
             if (!result.Succeeded)
                 throw new System.Exception($"User creation failed: {string.Join(", ", result.Errors.Select(e => e.Description))}");
 
-            // Assign the User role to the new user
-            await _userManager.AddToRoleAsync(newUser, "User");
-        }
-
-        private void InitiateUserRole()
-        {
-            // create User role if it does not exist
-            if (!_roleManager.RoleExistsAsync("User").Result)
+            // Assign the specified role to the new account
+            // by default, one account needs to be a patient or a doctor
+            // admin role is not allowed to assign to a new user
+            switch (registerRequest.Role)
             {
-                var userRole = new IdentityRole("User");
-                _ = _roleManager.CreateAsync(userRole).Result;
+                case UserRoles.PATIENT:
+                    await _userManager.AddToRoleAsync(newUser, UserRoles.PATIENT);
+                    break;
+                case UserRoles.DOCTOR:
+                    await _userManager.AddToRoleAsync(newUser, UserRoles.DOCTOR);
+                    break;
             }
         }
 
@@ -207,14 +200,19 @@ namespace Asm2.Controllers
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
+            foreach (var role in _userManager.GetRolesAsync(user).Result)
+            {
+                authClaims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
             // get key from appsettings.json
             var authSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
 
             var securityToken = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
-                //expires: DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["Jwt:Expires"])),
-                expires: DateTime.UtcNow.AddMinutes(5),
+                // by defaut, an access token is valid for 5 minutes
+                expires: DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["Jwt:Expires"])),
                 claims: authClaims,
                 signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256));
 
@@ -226,10 +224,10 @@ namespace Asm2.Controllers
                 JwtId = securityToken.Id,
                 IsRevoked = false,
                 UserId = user.Id,
-                DateAdded = DateTime.UtcNow,
+                DateAdded = DateTime.Now,
                 Token = Guid.NewGuid().ToString() + "-" + Guid.NewGuid().ToString(),
                 //DateExpires = DateTime.UtcNow.AddDays(Convert.ToDouble(_configuration["Jwt:RefreshTokenExpires"])),
-                DateExpires = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["Jwt:RefreshTokenExpires"]))
+                DateExpires = DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["Jwt:RefreshTokenExpires"]))
             };
 
             // add refresh token to the db

@@ -1,9 +1,16 @@
-﻿namespace Asm2.DataTransferModels
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Asm2.DataTransferModels
 {
     public class RegisterRequest
     {
+        [Required(ErrorMessage = "Username is required!")]
         public string Username { get; set; }
+        [Required(ErrorMessage = "Email is required!")]
         public string Email { get; set; }
+        [Required(ErrorMessage = "Password can not be empty.")]
         public string Password { get; set; }
+        [Required(ErrorMessage = "Account need to be a patient or a doctor!")]
+        public string Role { get; set; }
     }
 }

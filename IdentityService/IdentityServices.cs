@@ -1,6 +1,9 @@
 ﻿using IdentityModel;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +15,6 @@ namespace IdentityService
     public class IdentityServices : IIdentityServices
     {
         private readonly IdentityDbContext _identityDbContext;
-
         /// <summary>
         /// IdentityServices constructor initializes the identity services if dependency injection is used
         /// </summary>
@@ -33,7 +35,6 @@ namespace IdentityService
             else
                 _identityDbContext = identityDbContext;
         }
-
         public async Task AddRefreshTokenAsync(RefreshToken refreshToken)
         {
             await _identityDbContext.RefreshTokens.AddAsync(refreshToken);
@@ -46,10 +47,25 @@ namespace IdentityService
                 .FirstOrDefault(rt => rt.Token == refreshToken && rt.IsRevoked == false);
         }
 
+        public bool HasRoles()
+        {
+            return _identityDbContext.Roles.Any();
+        }
+
+        public bool HasUsers()
+        {
+            return _identityDbContext.Users.Any();
+        }
+
         public void UpdateRefreshToken(RefreshToken refreshToken)
         {
             _identityDbContext.Update(refreshToken);
             _identityDbContext.SaveChanges();
+        }
+
+        public List<ApplicationUser> GetAllUsers()
+        {
+            return _identityDbContext.Users.ToList();
         }
     }
 
@@ -58,5 +74,8 @@ namespace IdentityService
         Task AddRefreshTokenAsync(RefreshToken refreshToken);
         RefreshToken FindRefreshToken(string refreshToken);
         void UpdateRefreshToken(RefreshToken refreshToken);
+        bool HasRoles();
+        bool HasUsers();
+        //List<ApplicationUser> GetAllUsers();
     }
 }
