@@ -1,9 +1,12 @@
-﻿using Asm2.DataTransferModels;
+﻿using Asm2.DataTransferModels.Identity;
 using IdentityModel;
 using IdentityService;
+using MedicalModel;
+using MedicalService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -24,6 +27,7 @@ namespace Asm2.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
         private readonly IIdentityServices _identityServices;
+        private readonly IMedicalServices _medicalServices; // used to get user information from the db
 
         // refresh otken
         private readonly TokenValidationParameters _tokenValidationParameters;
@@ -31,7 +35,8 @@ namespace Asm2.Controllers
         public AuthenticationController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<IdentityRole> roleManager
             , IIdentityServices identityServices
             , IConfiguration configuration
-            , TokenValidationParameters tokenValidationParameters)
+            , TokenValidationParameters tokenValidationParameters
+            , IMedicalServices medicalServices)
         {
             _roleManager = roleManager;
             _userManager = userManager;
@@ -39,11 +44,13 @@ namespace Asm2.Controllers
             _configuration = configuration;
             _identityServices = identityServices;
             _tokenValidationParameters = tokenValidationParameters;
+
+            _medicalServices = medicalServices;
         }
 
         [HttpGet("get-user-info")]
         [Authorize]
-        public IActionResult GetUserInfo()
+        public async Task<IActionResult> GetUserInfoAsync()
         {
             var user = _userManager.Users.FirstOrDefault();
             var sUser = User;
@@ -65,8 +72,10 @@ namespace Asm2.Controllers
             if (!_userManager.CheckPasswordAsync(user, loginRequest.Password).Result)
                 return Unauthorized("Invalid password.");
 
+            var roles = await _medicalServices.FindPersonRolesAsync(user.Id);
+
             // Generate JWT token
-            var token = await GenerateJwtTokenAsync(user);
+            var token = await GenerateJwtTokenAsync(user, roles);
 
             // Implement login logic here
             return Ok(token);
@@ -78,9 +87,11 @@ namespace Asm2.Controllers
             if (!ModelState.IsValid)
                 throw new Exception("Invalid request's data!");
 
-            var existingUser = await _userManager.FindByEmailAsync(registerRequest.Email);
+            var existingIdentity = await _userManager.FindByEmailAsync(registerRequest.Email);
+            var existingUser = await _medicalServices.GetUserByEmailAsync(registerRequest.Email);
 
-            if (existingUser != null)
+            if (existingIdentity != null
+                || existingUser != null)
                 return BadRequest($"User with this email: {registerRequest.Email} already exists with this email.");
 
             await CreateNewUser(registerRequest);
@@ -89,23 +100,16 @@ namespace Asm2.Controllers
             return Created(nameof(Register), $"User {registerRequest.Email} is created successful");
         }
 
-        [HttpPost("revoke-access-token")]
+        [HttpPost("refresh-accesstoken")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest requestForToken)
         {
-            try
+            var result = await VerifyAndGenerateTokenAsync(requestForToken);
+            if (result == null)
             {
-                var result = await VerifyAndGenerateTokenAsync(requestForToken);
-                if (result == null)
-                {
-                    return BadRequest("Invalid refresh token.");
-                }
+                return BadRequest("Invalid refresh token.");
+            }
 
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"{ex.Message}, please re-authenticate!");
-            }
+            return Ok(result);
         }
 
         private async Task<TokenResult> VerifyAndGenerateTokenAsync(RefreshTokenRequest requestForToken)
@@ -148,22 +152,22 @@ namespace Asm2.Controllers
 
                 // generate new Token 
                 var dbUserData = await _userManager.FindByIdAsync(dbRefreshToken.UserId);
-                //var newtokenResponse = GenerateJwtToken(dbUserData, requestForToken.RefreshToken).Result;
+                var personRoles = await _medicalServices.FindPersonRolesAsync(dbRefreshToken.UserId);
 
-                var newTokenResponse = GenerateJwtTokenAsync(dbUserData);
+                var newTokenResponse = GenerateJwtTokenAsync(dbUserData, personRoles);
                 // TODO:
                 return await newTokenResponse;
             }
         }
 
-        private DateTime UnixTimeStampToDateTimeUtc(long unixTimeStamp)
+        private static DateTime UnixTimeStampToDateTimeUtc(long unixTimeStamp)
         {
             // Convert Unix timestamp to DateTime in UTC
             var dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(unixTimeStamp);
             return dateTimeOffset.DateTime.ToLocalTime();
         }
 
-        private async Task CreateNewUser(RegisterRequest registerRequest)
+        private async Task CreateNewUser([FromBody] RegisterRequest registerRequest)
         {
             ApplicationUser newUser = new ApplicationUser
             {
@@ -175,22 +179,34 @@ namespace Asm2.Controllers
 
             if (!result.Succeeded)
                 throw new System.Exception($"User creation failed: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+            // by default, every user is assigned to the USER role
+            await _userManager.AddToRoleAsync(newUser, UserRoles.USER);
+
+            // add user account
 
             // Assign the specified role to the new account
             // by default, one account needs to be a patient or a doctor
             // admin role is not allowed to assign to a new user
-            switch (registerRequest.Role)
+            var role = (registerRequest.Role[0].ToString().ToUpper() + registerRequest.Role.Substring(1).ToLower()) switch
             {
-                case UserRoles.PATIENT:
-                    await _userManager.AddToRoleAsync(newUser, UserRoles.PATIENT);
-                    break;
-                case UserRoles.DOCTOR:
-                    await _userManager.AddToRoleAsync(newUser, UserRoles.DOCTOR);
-                    break;
-            }
+                "Patient" => nameof(PersonRole.Patient),
+                "Doctor" => nameof(PersonRole.Doctor),
+                _ => throw new Exception("Invalid role specified. Only 'Patient' or 'Doctor' roles are allowed.")
+            };
+            var user = new Person()
+            {
+                Email = registerRequest.Email,
+                Roles = new List<PersonRole>()
+                {
+                    (PersonRole)Enum.Parse(typeof(PersonRole), role)
+                },
+                Id = newUser.Id
+            };
+
+            await _medicalServices.AddPersonAsync(user);
         }
 
-        private async Task<TokenResult> GenerateJwtTokenAsync(ApplicationUser user)
+        private async Task<TokenResult> GenerateJwtTokenAsync(ApplicationUser user, List<PersonRole> roles)
         {
             var authClaims = new List<Claim>()
             {
@@ -200,9 +216,9 @@ namespace Asm2.Controllers
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            foreach (var role in _userManager.GetRolesAsync(user).Result)
+            foreach (var role in roles)
             {
-                authClaims.Add(new Claim(ClaimTypes.Role, role));
+                authClaims.Add(new Claim(ClaimTypes.Role, role.ToString()));
             }
 
             // get key from appsettings.json
@@ -237,7 +253,7 @@ namespace Asm2.Controllers
             {
                 AccessToken = jwtToken,
                 RefreshToken = refreshToken.Token,
-                Expires = securityToken.ValidTo
+                Expires_in = securityToken.ValidTo.ToLocalTime()
             };
 
             return response;

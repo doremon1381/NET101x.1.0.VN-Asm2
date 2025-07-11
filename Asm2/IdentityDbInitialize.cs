@@ -1,9 +1,13 @@
-﻿using IdentityModel;
+﻿using Asm2.Extensions;
+using IdentityModel;
 using IdentityService;
+using MedicalModel;
+using MedicalService;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -23,6 +27,7 @@ namespace Asm2
 
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+                var medicalServices = scope.ServiceProvider.GetRequiredService<IMedicalServices>();
 
                 if (userManager.Users.Count() == 0)
                 {
@@ -38,11 +43,24 @@ namespace Asm2
                     if (result.Succeeded)
                         _ = userManager.AddToRoleAsync(admin, UserRoles.ADMIN).Result;
 
+                    var adminPerson = new Person()
+                    {
+                        FirstName = "Tuan",
+                        LastName = "Nguyen",
+                        Email = "doremon1380@gmail.com",
+                        PhoneNumber = "0987654321",
+                        Address = "Unknown",
+                        Gender = Gender.Male,
+                        Nationality = NationCode.VIETNAM,
+                        Roles = new List<PersonRole> { PersonRole.Patient }
+                    };
+
+                    medicalServices.AddPersonAsync(adminPerson).GetAwaiter().GetResult();
                 }
             }
         }
 
-        public static void EnsureDbCreated(this IApplicationBuilder appBuilder)
+        public static void EnsureIdentityDbCreated(this IApplicationBuilder appBuilder)
         {
             using (var scope = appBuilder.ApplicationServices.CreateScope())
             {
@@ -65,12 +83,8 @@ namespace Asm2
                     await roleManager.CreateAsync(new IdentityRole(UserRoles.ADMIN));
 
                 // create patient role
-                if (!roleManager.RoleExistsAsync(UserRoles.PATIENT).Result)
-                    await roleManager.CreateAsync(new IdentityRole(UserRoles.PATIENT));
-
-                // create doctor role
-                if (!roleManager.RoleExistsAsync(UserRoles.DOCTOR).Result)
-                    await roleManager.CreateAsync(new IdentityRole(UserRoles.DOCTOR));
+                if (!roleManager.RoleExistsAsync(UserRoles.USER).Result)
+                    await roleManager.CreateAsync(new IdentityRole(UserRoles.USER));
             }
         }
     }

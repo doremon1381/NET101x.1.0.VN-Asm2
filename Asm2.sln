@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityService", "Identity
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityModel", "IdentityModel\IdentityModel.csproj", "{26A6E95F-EBCA-CF36-C8D5-0F3ADEF9C406}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MedicalModel", "MedicalModel\MedicalModel.csproj", "{66A8F1B9-DCC6-419D-BB86-2DF4CE67E917}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MedicalService", "MedicalService\MedicalService.csproj", "{42B9E7FB-5F48-49D9-8B5F-DC4BEEFD29A0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +31,14 @@ Global
 		{26A6E95F-EBCA-CF36-C8D5-0F3ADEF9C406}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26A6E95F-EBCA-CF36-C8D5-0F3ADEF9C406}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{26A6E95F-EBCA-CF36-C8D5-0F3ADEF9C406}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66A8F1B9-DCC6-419D-BB86-2DF4CE67E917}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66A8F1B9-DCC6-419D-BB86-2DF4CE67E917}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66A8F1B9-DCC6-419D-BB86-2DF4CE67E917}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66A8F1B9-DCC6-419D-BB86-2DF4CE67E917}.Release|Any CPU.Build.0 = Release|Any CPU
+		{42B9E7FB-5F48-49D9-8B5F-DC4BEEFD29A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42B9E7FB-5F48-49D9-8B5F-DC4BEEFD29A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42B9E7FB-5F48-49D9-8B5F-DC4BEEFD29A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42B9E7FB-5F48-49D9-8B5F-DC4BEEFD29A0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -9,7 +9,8 @@ namespace IdentityModel
     public static class UserRoles
     {
         public const string ADMIN = "Admin";
-        public const string PATIENT = "Patient";
-        public const string DOCTOR = "Doctor";
+        //public const string PATIENT = "Patient";
+        //public const string DOCTOR = "Doctor";
+        public const string USER = "User";
     }
 }

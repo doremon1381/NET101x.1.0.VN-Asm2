@@ -2,8 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Asm2.Exceptions;
+using DinkToPdf;
+using DinkToPdf.Contracts;
 using IdentityModel;
 using IdentityService;
+using MedicalModel;
+using MedicalService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -16,7 +21,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
-//using static Asm2.IdentityDbInitialize;
 
 namespace Asm2
 {
@@ -32,9 +36,15 @@ namespace Asm2
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<IConverter>(new SynchronizedConverter(new PdfTools()));
+
             // add database context and identity services here if needed
             services.AddDbContext<IdentityDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("IdentityDbConnection")
                 , b => b.MigrationsAssembly("Asm2"))
+                , ServiceLifetime.Transient, ServiceLifetime.Transient);
+
+            services.AddDbContext<MedicalDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("MedicalDbConnection")
+                , optionAction => optionAction.MigrationsAssembly("Asm2"))
                 , ServiceLifetime.Transient, ServiceLifetime.Transient);
 
             var tokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
@@ -58,6 +68,7 @@ namespace Asm2
                 .AddEntityFrameworkStores<IdentityService.IdentityDbContext>()
                 .AddDefaultTokenProviders();
             services.AddTransient<IdentityService.IIdentityServices, IdentityService.IdentityServices>();
+            services.AddTransient<IMedicalServices, MedicalServices>();
             // add authentication
             services.AddAuthentication(options =>
             {
@@ -83,6 +94,8 @@ namespace Asm2
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            DataSeeding(app);
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -93,11 +106,6 @@ namespace Asm2
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Asm2 v1"));
             }
 
-            app.EnsureDbCreated();
-
-            app.SeedRolesAsync().GetAwaiter().GetResult();
-            app.SeedUsers();
-
             app.UseHttpsRedirection();
 
             app.UseRouting();
@@ -105,10 +113,23 @@ namespace Asm2
             app.UseAuthentication();
             app.UseAuthorization();
 
+            // add built-in exception handler
+            app.ConfigureBuildInExceptionHandler();
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
+        }
+
+        private static void DataSeeding(IApplicationBuilder app)
+        {
+            app.EnsureIdentityDbCreated();
+            app.EnsureMedicalDbCreated();
+
+            app.SeedRolesAsync().GetAwaiter().GetResult();
+            app.SeedUsers();
+            app.SeedMedicalData();
         }
     }
 }

@@ -5,6 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Attributes\ValidateDateTimeValueAttribute.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DinkToPdf" Version="1.0.8" />
     <PackageReference Include="microsoft.aspnetcore.authentication.jwtbearer" Version="5.0.17" />
     <PackageReference Include="microsoft.entityframeworkcore.design" Version="5.0.17">
       <PrivateAssets>all</PrivateAssets>
@@ -20,6 +25,8 @@
   <ItemGroup>
     <ProjectReference Include="..\IdentityModel\IdentityModel.csproj" />
     <ProjectReference Include="..\IdentityService\IdentityService.csproj" />
+    <ProjectReference Include="..\MedicalModel\MedicalModel.csproj" />
+    <ProjectReference Include="..\MedicalService\MedicalService.csproj" />
   </ItemGroup>
 
 </Project>
