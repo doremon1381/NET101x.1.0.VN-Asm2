@@ -34,7 +34,7 @@ namespace Asm2.Controllers
             // long to short, I can take patient Id from IdentityClaims which define the user inside HttpContext
 
             // I use email as username, so search by name identifier also means search by email
-            var patientEmail = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var patientEmail = HttpContext.User.FindFirstValue(ClaimTypes.Email);
             var patient = await _medicalServices.FindPatientByEmailAsync(patientEmail);
 
             // Logic to create a new appointment
@@ -83,7 +83,7 @@ namespace Asm2.Controllers
         [PersonRoleAccepted(Role = PersonRole.Patient)]
         public async Task<IActionResult> GetAppointmentForPatientByIdAsync(string appointmentId)
         {
-            var patientEmail = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var patientEmail = HttpContext.User.FindFirstValue(ClaimTypes.Email);
 
             var appointment = await _medicalServices.FindAppointmentForPatientByIdAsync(appointmentId, patientEmail);
 

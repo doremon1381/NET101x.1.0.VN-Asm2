@@ -171,7 +171,7 @@ namespace Asm2.Controllers
         {
             ApplicationUser newUser = new ApplicationUser
             {
-                UserName = registerRequest.Username,
+                UserName = registerRequest.Username,                
                 Email = registerRequest.Email
             };
 
@@ -196,13 +196,14 @@ namespace Asm2.Controllers
             var user = new Person()
             {
                 Email = registerRequest.Email,
+                FirstName = registerRequest.FirstName,
+                LastName = registerRequest.LastName,
                 Roles = new List<PersonRole>()
                 {
                     (PersonRole)Enum.Parse(typeof(PersonRole), role)
                 },
                 Id = newUser.Id
             };
-
             await _medicalServices.AddPersonAsync(user);
         }
 

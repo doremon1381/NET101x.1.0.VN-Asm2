@@ -107,8 +107,8 @@ namespace Asm2.Controllers
         [HttpGet("/odp/complete/patient")]
         public async Task<IActionResult> GetPatientInformationInPDFAsync()
         {
-            var patientId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var patient = await _medicalServices.FindPatientByEmailAsync(patientId);
+            var patientEmail = HttpContext.User.FindFirstValue(ClaimTypes.Email);
+            var patient = await _medicalServices.FindPatientByEmailAsync(patientEmail);
 
             var html = $@"
                 <html>

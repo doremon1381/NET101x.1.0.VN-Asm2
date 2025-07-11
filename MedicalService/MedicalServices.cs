@@ -153,7 +153,7 @@ namespace MedicalService
         public Task<Person> GetUserByEmailAsync(string email)
         {
             return _medicalDbContext.Persons
-                .FirstOrDefaultAsync(p => p.Email.Equals(email, StringComparison.OrdinalIgnoreCase) && p.IsDeleted == false);
+                .FirstOrDefaultAsync(p => p.Email.Equals(email) && p.IsDeleted == false);
         }
     }
 
