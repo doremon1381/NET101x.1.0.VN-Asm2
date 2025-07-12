@@ -37,15 +37,15 @@ namespace MedicalService
 
         public async Task<Appointment> CreateAppointmentAsync(AppointmentRequestModel appointment, string patientId)
         {
-            var doctor = _medicalDbContext.Persons.FirstOrDefault(p => p.Id == appointment.DoctorId);
+            var doctor = _medicalDbContext.Persons.FirstOrDefault(p => p.Id == appointment.DoctorId.Trim());
             if (doctor == null)
-                throw new Exception($"There is doctor with this id: {appointment.DoctorId}");
+                throw new Exception($"There is doctor with this id: {appointment.DoctorId.Trim()}");
 
             // TODO: check if there is one or more appointment in this day or 
             var duplicateAppointments = _medicalDbContext.Appointments.Where(a => a.PatientId == patientId
                     && a.DoctorId == doctor.Id
-                    && (a.BookingSchedule.Start.AddHours(-12) < DateTime.Parse(appointment.AppointmentDate)
-                        || a.BookingSchedule.Start.AddHours(12) > DateTime.Parse(appointment.AppointmentDate))).ToList();
+                    && (a.BookingSchedule.Start.AddHours(-12) < DateTime.Parse(appointment.AppointmentDate.Trim())
+                        && a.BookingSchedule.Start.AddHours(12) > DateTime.Parse(appointment.AppointmentDate.Trim()))).ToList();
             if (duplicateAppointments.Any())
                 throw new Exception("We're already set for you an appointment around that time, one appointment with its next can not be too close!");
 
@@ -53,12 +53,12 @@ namespace MedicalService
             {
                 DoctorId = doctor.Id,
                 Description = appointment.Description,
-                Status = AppointmentStatus.Confirmed,
+                Status = AppointmentStatus.Accepted,
                 PatientId = patientId,
                 BookingSchedule = new BookingSchedule()
                 {
-                    Start = DateTime.Parse(appointment.AppointmentDate),
-                    ExpireAt = DateTime.Parse(appointment.AppointmentDate).AddDays(2),
+                    Start = DateTime.Parse(appointment.AppointmentDate.Trim()),
+                    ExpireAt = DateTime.Parse(appointment.AppointmentDate.Trim()).AddDays(2),
                     Priority = AppointmentPriority.Normal,
                     End = null
                 }
@@ -97,7 +97,7 @@ namespace MedicalService
 
         public async Task<Person> FindDoctorByIdAsync(string doctorId)
         {
-            var doctor = await _medicalDbContext.Persons.Include(p => p.DoctorInfo)
+            var doctor = await _medicalDbContext.Persons.Include(p => p.DoctorInfo.Hospital)
                 .Where(p => ((string)(object)p.Roles).Contains(PersonRole.Doctor.ToString())
                             && p.IsDeleted == false)
                 .FirstOrDefaultAsync(p => p.Id.Equals(doctorId));

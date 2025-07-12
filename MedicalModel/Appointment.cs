@@ -37,7 +37,7 @@ namespace MedicalModel
 
     public enum AppointmentStatus
     {
-        Confirmed,
+        Accepted,
         Handling, // a meeting with doctor is on going
         Cancelled,
         Rescheduled,

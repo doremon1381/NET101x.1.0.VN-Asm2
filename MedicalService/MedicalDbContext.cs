@@ -22,6 +22,7 @@ namespace MedicalService
         public DbSet<Hospital> Hospitals { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Diagnosis> Diagnoses { get; set; }
+        public DbSet<Log> Logs { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -58,6 +59,12 @@ namespace MedicalService
             modelBuilder.Entity<Appointment>()
                 .Navigation(a => a.BookingSchedule)
                 .IsRequired();
+
+            modelBuilder.Entity<Log>()
+                .HasKey(l => l.Id);
+            modelBuilder.Entity<Log>()
+                .Property(l => l.Id)
+                .ValueGeneratedOnAdd();
 
             var roleConverter = new ValueConverter<List<PersonRole>, string>(
                 v => string.Join(",", v),

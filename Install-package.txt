@@ -1,0 +1,15 @@
+1. Identity
+- microsoft.entityframeworkcore
+- microsoft.entityframeworkcore.sqlserver
+- microsoft.entityframeworkcore.tools
+- microsoft.entityframeworkcore.design
+
+- microsot.aspnetcore.authentication.jwtbeaer
+
+2. output pdf
+- dinktopdf
+
+3. log
+- serilog.aspnetcore
+- serilog.sinks.file
+- serilog.sinks.mssqlserver

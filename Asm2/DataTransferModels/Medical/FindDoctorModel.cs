@@ -5,7 +5,7 @@ namespace Asm2.DataTransferModels.Medical
     public class FindDoctorModel
     {
         [Required(ErrorMessage = "Country can not be empty")]
-        public string Country { get; set; }
+        public string CountryCode { get; set; }
         [Required(ErrorMessage = "Doctor's first name can not be empty")]
         public string FirstName { get; set; }
         [Required(ErrorMessage = "Doctor's last name can not be empty")]

@@ -62,12 +62,13 @@ namespace Asm2.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
         {
+            throw new Exception("null");
             if (!ModelState.IsValid)
                 return BadRequest("Invalid login's information!");
 
             var user = _userManager.FindByNameAsync(loginRequest.UserName).Result;
             if (user == null)
-                return BadRequest($"User with this username: {loginRequest.UserName} does not exist.");
+                return BadRequest($"wrong username/email or password.");
 
             if (!_userManager.CheckPasswordAsync(user, loginRequest.Password).Result)
                 return Unauthorized("Invalid password.");
@@ -120,8 +121,8 @@ namespace Asm2.Controllers
             var tokenValidation = jwtTokenHandler.ReadJwtToken(requestForToken.AccessToken);
 
             // check validate expiry date
-            var expiryDateFromRequestToken = long.Parse(tokenValidation.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Exp).Value);
-            var expiryDate = UnixTimeStampToDateTimeUtc(expiryDateFromRequestToken);
+            var accessTokenExpirydate = long.Parse(tokenValidation.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Exp).Value);
+            var expiryDate = UnixTimeStampToDateTimeUtc(accessTokenExpirydate);
             if (expiryDate > DateTime.Now)
             {
                 throw new Exception("Token has not expired yet!");

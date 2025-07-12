@@ -44,7 +44,7 @@ namespace Asm2.Controllers
         public async Task<IActionResult> FindDoctorsFromParticularRegionAsync([FromBody] FindDoctorModel doctorModel)
         {
             // find doctors inside all hospitals of a particular region
-            var doctors = await _medicalServices.FindDoctorsFromParticularRegionAsync(doctorModel.FirstName, doctorModel.LastName, doctorModel.HospitalName, doctorModel.Specialty, doctorModel.City, doctorModel.Country);
+            var doctors = await _medicalServices.FindDoctorsFromParticularRegionAsync(doctorModel.FirstName, doctorModel.LastName, doctorModel.HospitalName, doctorModel.Specialty, doctorModel.City, doctorModel.CountryCode);
 
             var result = doctors.Select(d => new DoctorModel()
             {
@@ -98,6 +98,7 @@ namespace Asm2.Controllers
                 Specialty = doctor.DoctorInfo.Specialty == null ? new[] { "" } : doctor.DoctorInfo.Specialty.Split(","),
                 SubSpecialties = doctor.DoctorInfo.SubSpecialties == null ? new[] { "" } : doctor.DoctorInfo?.SubSpecialties.Split(","),
                 ExperienceInYrs = doctor.DoctorInfo.ExperienceInYrs == null ? "unknown" : doctor.DoctorInfo.ExperienceInYrs.ToString(),
+                HospitalName = doctor.DoctorInfo.Hospital.Name ?? "",
                 Nationality = doctor.Nationality
             };
 

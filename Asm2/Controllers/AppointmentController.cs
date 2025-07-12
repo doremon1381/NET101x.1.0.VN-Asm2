@@ -46,11 +46,7 @@ namespace Asm2.Controllers
                 AppointmentId = result.Id,
                 DoctorName = $"{result.Doctor.LastName} {result.Doctor.FirstName}",
                 Description = result.Description,
-                Status = result.Status switch
-                {
-                    MedicalModel.AppointmentStatus.Confirmed => "accepted",
-                    _ => throw new System.Exception("Can not create new appointment because something wrong with status was happened!")
-                }
+                Status = result.Status.ToString()
             });
         }
 
